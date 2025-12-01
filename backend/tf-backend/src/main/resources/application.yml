@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: tf-backend
+server:
+  port: 8081
