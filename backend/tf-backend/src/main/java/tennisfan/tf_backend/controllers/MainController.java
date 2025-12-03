@@ -10,7 +10,7 @@ public class MainController {
 
     @GetMapping
     public String gohome() {
-        return "homePage";
+        return "TennisFan Backend is running!";
     }
 
 }

@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS users;
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(15) UNIQUE NOT NULL,
+    password_hash VARCHAR(19) NOT NULL,
+    role VARCHAR(10) NOT NULL CHECK (role IN ('USER', 'ADMIN')) DEFAULT 'USER'
+);
