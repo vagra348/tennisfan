@@ -33,61 +33,63 @@
 
 # 2. Данные
 
-![Image](schema.jpg)
+![Image](schema_upd.jpg)
 
 ### Таблица users:
 
-| Ключ            | Атрибуты                                                              |
-|-----------------|-----------------------------------------------------------------------|
-| `id`            | SERIAL PRIMARY KEY                                                    |
-| `username`      | VARCHAR(15) UNIQUE NOT NULL                                           |
-| `password_hash` | VARCHAR(19) NOT NULL                                                  |
-| `role`          | VARCHAR(10) NOT NULL CHECK (role IN ('USER', 'ADMIN')) DEFAULT 'USER' |
+| Ключ            | Атрибуты                                                                        |
+|-----------------|---------------------------------------------------------------------------------|
+| `id`            | SERIAL PRIMARY KEY                                                              |
+| `username`      | VARCHAR(15) UNIQUE NOT NULL                                                     |
+| `password_hash` | VARCHAR(19) NOT NULL                                                            |
+| `role`          | VARCHAR(10) NOT NULL CHECK (role IN ('USER', 'MEMBER', 'ADMIN')) DEFAULT 'USER' |
+| `full_name`     | VARCHAR(100) NOT NULL                                                           |
 
-### Таблица players:
+### Таблица tournament_participants:
 
-| Ключ        | Атрибуты                                   |
-|-------------|--------------------------------------------|
-| `id`        | SERIAL PRIMARY KEY                         |
-| `full_name` | VARCHAR(100) NOT NULL                      |
-| `country`   | VARCHAR(50)                                |
-| `ranking`   | INT CHECK (ranking > 0 OR ranking IS NULL) |
+| Ключ                | Атрибуты                                         |
+|---------------------|--------------------------------------------------|
+| `tournament_id`     | INT REFERENCES tournaments(id) ON DELETE CASCADE |
+| `user_id`           | INT REFERENCES users(id) ON DELETE CASCADE       |
+| `registration_date` | TIMESTAMP DEFAULT CURRENT_TIMESTAMP              |
+|                     | PRIMARY KEY (tournament_id, user_id)             |
 
 ### Таблица tournaments:
 
-| Ключ       | Атрибуты              |
-|------------|-----------------------|
-| `id`       | SERIAL PRIMARY KEY    |
-| `name`     | VARCHAR(100) NOT NULL |
-| `location` | VARCHAR(100)          |
+| Ключ                    | Атрибуты                                                                                                                         |
+|-------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| `id`                    | SERIAL PRIMARY KEY                                                                                                               |
+| `name`                  | VARCHAR(100) NOT NULL                                                                                                            |
+| `registration_deadline` | TIMESTAMP                                                                                                                        |
+| `status`                | VARCHAR(20) NOT NULL CHECK (status IN ('UPCOMING', 'REGISTRATION_OPEN', 'ONGOING', 'COMPLETED', 'CANCELLED')) DEFAULT 'UPCOMING' |
 
 ### Таблица matches:
 
-| Ключ            | Атрибуты                                                                  |
-|-----------------|---------------------------------------------------------------------------|
-| `id`            | SERIAL PRIMARY KEY                                                        |
-| `tournament_id` | INT REFERENCES tournaments(id) ON DELETE CASCADE                          |
-| `player1_id`    | INT REFERENCES players(id) ON DELETE CASCADE                              |
-| `player2_id`    | INT REFERENCES players(id) ON DELETE CASCADE                              |
-| `player1_score` | INT                                                                       |
-| `player2_score` | INT                                                                       |
-| `match_date`    | TIMESTAMP NOT NULL                                                        |
-| `status`        | VARCHAR(20) NOT NULL CHECK (status IN ('Scheduled', 'Live', 'Completed')) |
-|                 | CONSTRAINT different_players CHECK (player1_id != player2_id)             |
+| Ключ            | Атрибуты                                                                                                            |
+|-----------------|---------------------------------------------------------------------------------------------------------------------|
+| `id`            | SERIAL PRIMARY KEY                                                                                                  |
+| `tournament_id` | INT REFERENCES tournaments(id) ON DELETE CASCADE                                                                    |
+| `player1_id`    | INT REFERENCES users(id) ON DELETE CASCADE                                                                          |
+| `player2_id`    | INT REFERENCES users(id) ON DELETE CASCADE                                                                          |
+| `player1_score` | INT                                                                                                                 |
+| `player2_score` | INT                                                                                                                 |
+| `match_date`    | TIMESTAMP                                                                                                           |
+| `status`        | VARCHAR(20) NOT NULL CHECK (status IN ('SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED')) DEFAULT '  SCHEDULED' |
+|                 | CONSTRAINT different_players CHECK (player1_id != player2_id)                                                       |
 
 ### Таблица favorite_players:
 
-| Ключ        | Атрибуты                                     |
-|-------------|----------------------------------------------|
-| `user_id`   | INT REFERENCES users(id) ON DELETE CASCADE   |
-| `player_id` | INT REFERENCES players(id) ON DELETE CASCADE |
-|             | PRIMARY KEY (user_id, player_id)             |
+| Ключ        | Атрибуты                                   |
+|-------------|--------------------------------------------|
+| `user_id`   | INT REFERENCES users(id) ON DELETE CASCADE |
+| `player_id` | INT REFERENCES users(id) ON DELETE CASCADE |
+|             | PRIMARY KEY (user_id, player_id)           |
 
 ## Общие ограничения целостности:
 
--player1_id и player2_id в таблице matches не могут ссылаться на одного и того же игрока  
--Ранг игрока должен быть положительным числом или NULL  
--Уникальность пары user_id и player_id в таблице favorite_players
+- player1_id и player2_id в таблице matches не могут ссылаться на одного и того же игрока
+- Уникальность пары user_id и player_id в таблице favorite_players
+- Уникальность пары user_id и tournament_id в таблице tournament_participants
 
 --------
 
@@ -126,15 +128,16 @@
 
 REST API. Полностью - на http://localhost:8081/swagger-ui/index.html#/ (см. начало документа)
 
-| Контроллер                                              | Эндпоинты                                                                                                                                                                                                                                                                                                                                                                            |
-|---------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| main-controller <br> (для проверки доступности сервера) | GET /                                                                                                                                                                                                                                                                                                                                                                                |
-| admin-controller                                        | PUT /api/admin/users/{userId}/role <br> PUT /api/admin/players/{playerId} <br> DELETE /api/admin/players/{playerId} <br> PUT /api/admin/matches/{matchId} <br> DELETE /api/admin/matches/{matchId} <br> GET /api/admin/players <br> POST /api/admin/players <br> GET /api/admin/matches <br> POST /api/admin/matches <br> GET /api/admin/users <br> DELETE /api/admin/users/{userId} |
-| favorite-controller                                     | POST /api/favorites/players/{playerId} <br> DELETE /api/favorites/players/{playerId}                                                                                                                                                                                                                                                                                                 |
-| auth-controller                                         | POST /api/auth/register <br> POST /api/auth/login                                                                                                                                                                                                                                                                                                                                    |
-| tournament-controller                                   | GET /api/tournaments                                                                                                                                                                                                                                                                                                                                                                 |
-| player-controller                                       | GET /api/players                                                                                                                                                                                                                                                                                                                                                                     |
-| match-controller                                        | GET /api/matches <br> GET /api/matches/favorites                                                                                                                                                                                                                                                                                                                                     |
+| Контроллер                                              | Эндпоинты                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+|---------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| main-controller <br> (для проверки доступности сервера) | GET /                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| admin-controller                                        | GET /api/admin/users <br> PUT /api/admin/users/{userId}/role <br> DELETE /api/admin/users/{userId} <br> GET /api/admin/matches <br> POST /api/admin/matches <br> PUT /api/admin/matches/{matchId} <br> DELETE /api/admin/matches/{matchId} <br> GET /api/admin/tournaments <br> POST /api/admin/tournaments <br> PUT /api/admin/tournaments/{tournamentId} <br> DELETE /api/admin/tournaments/{tournamentId} <br> POST /api/admin/tournaments/{tournamentId}/open-registration <br> POST /api/admin/tournaments/{tournamentId}/close-registration <br> GET /api/admin/tournaments/{tournamentId}/participants |
+| favorite-controller                                     | POST /api/favorites/players/{playerId} <br> DELETE /api/favorites/players/{playerId}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| auth-controller                                         | POST /api/auth/register <br> POST /api/auth/login                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| tournament-controller                                   | GET /api/tournaments <br> GET /api/tournaments/active                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| player-controller                                       | GET /api/players <br> GET /api/players/club <br> GET /api/players/{playerId}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| match-controller                                        | GET /api/matches <br> GET /api/matches/favorites                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| member-controller                                       | GET /api/member/tournament-status <br> POST /api/member/register-for-tournament <br> GET /api/member/my-matches <br> GET /api/member/tournament-history                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 --------
 
