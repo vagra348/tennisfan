@@ -9,13 +9,13 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AdminMatchDTO {
-    private Integer id;
+public class TournamentStatusDTO {
     private Integer tournamentId;
-    private Integer player1Id;
-    private Integer player2Id;
-    private Integer player1Score;
-    private Integer player2Score;
-    private LocalDateTime matchDate;
+    private String tournamentName;
+    private boolean isRegistered;
+    private boolean registrationOpen;
+    private LocalDateTime registrationDeadline;
+    private String message;
     private String status;
+    private boolean canRegister;
 }

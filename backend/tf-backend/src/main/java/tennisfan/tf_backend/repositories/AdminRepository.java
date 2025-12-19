@@ -1,63 +1,23 @@
 package tennisfan.tf_backend.repositories;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import tennisfan.tf_backend.dto.AdminMatchDTO;
-import tennisfan.tf_backend.dto.AdminPlayerDTO;
-import tennisfan.tf_backend.dto.AdminUserDTO;
-import tennisfan.tf_backend.dto.CreateMatchRequest;
-import tennisfan.tf_backend.dto.CreatePlayerRequest;
+import tennisfan.tf_backend.dto.*;
+import tennisfan.tf_backend.services.TournamentValidationService;
 
 import java.util.List;
 
 @Repository
 public class AdminRepository {
 
+    @Getter
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    public List<AdminPlayerDTO> getAllPlayersForAdmin() {
-        String sql = "SELECT id, full_name, country, ranking FROM players ORDER BY id";
-        return jdbcTemplate.query(sql, (rs, rowNum) ->
-                new AdminPlayerDTO(
-                        rs.getInt("id"),
-                        rs.getString("full_name"),
-                        rs.getString("country"),
-                        rs.getInt("ranking")
-                )
-        );
-    }
-
-    public AdminPlayerDTO createPlayer(CreatePlayerRequest request) {
-        String sql = "INSERT INTO players (full_name, country, ranking) VALUES (?, ?, ?) RETURNING id";
-        Integer id = jdbcTemplate.queryForObject(sql, Integer.class,
-                request.getFullName(),
-                request.getCountry(),
-                request.getRanking());
-
-        return new AdminPlayerDTO(id, request.getFullName(), request.getCountry(), request.getRanking());
-    }
-
-    public void updatePlayer(Integer id, CreatePlayerRequest request) {
-        String sql = "UPDATE players SET full_name = ?, country = ?, ranking = ? WHERE id = ?";
-        jdbcTemplate.update(sql,
-                request.getFullName(),
-                request.getCountry(),
-                request.getRanking(),
-                id);
-    }
-
-    public void deletePlayer(Integer id) {
-        String deleteFavoritesSql = "DELETE FROM favorite_players WHERE player_id = ?";
-        jdbcTemplate.update(deleteFavoritesSql, id);
-
-        String deleteMatchesSql = "DELETE FROM matches WHERE player1_id = ? OR player2_id = ?";
-        jdbcTemplate.update(deleteMatchesSql, id, id);
-
-        String deletePlayerSql = "DELETE FROM players WHERE id = ?";
-        jdbcTemplate.update(deletePlayerSql, id);
-    }
+    @Autowired
+    private TournamentValidationService tournamentValidationService;
 
     public List<AdminMatchDTO> getAllMatchesForAdmin() {
         String sql = """
@@ -116,8 +76,8 @@ public class AdminRepository {
         }
 
         String sql = """
-            UPDATE matches SET tournament_id = ?, player1_id = ?, player2_id = ?, 
-                            player1_score = ?, player2_score = ?, match_date = ?, status = ? 
+            UPDATE matches SET tournament_id = ?, player1_id = ?, player2_id = ?,
+                            player1_score = ?, player2_score = ?, match_date = ?, status = ?
             WHERE id = ?
             """;
 
@@ -149,8 +109,8 @@ public class AdminRepository {
     }
 
     public void updateUserRole(Integer userId, String role) {
-        if (!role.equals("USER") && !role.equals("ADMIN")) {
-            throw new IllegalArgumentException("Invalid role. Must be USER or ADMIN");
+        if (!role.equals("USER") && !role.equals("MEMBER") && !role.equals("ADMIN")) {
+            throw new IllegalArgumentException("Invalid role. Must be USER, MEMBER or ADMIN");
         }
 
         String sql = "UPDATE users SET role = ? WHERE id = ?";
@@ -165,7 +125,129 @@ public class AdminRepository {
         jdbcTemplate.update(deleteUserSql, userId);
     }
 
-    public JdbcTemplate getJdbcTemplate() {
-        return jdbcTemplate;
+    public List<TournamentDTO> getAllTournaments() {
+        String sql = """
+        SELECT t.id, t.name, t.registration_deadline, t.status,
+               (SELECT COUNT(*) FROM tournament_participants tp WHERE tp.tournament_id = t.id) as registered_count
+        FROM tournaments t
+        ORDER BY t.registration_deadline DESC
+        """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            TournamentDTO dto = new TournamentDTO();
+            dto.setId(rs.getInt("id"));
+            dto.setName(rs.getString("name"));
+
+            if (rs.getTimestamp("registration_deadline") != null) {
+                dto.setRegistrationDeadline(rs.getTimestamp("registration_deadline").toLocalDateTime());
+            }
+
+            dto.setStatus(rs.getString("status"));
+            dto.setRegisteredCount(rs.getInt("registered_count"));
+
+            dto.setCanStart(rs.getInt("registered_count") >= 2);
+
+            return dto;
+        });
     }
+
+    public TournamentDTO createTournament(CreateTournamentDTO request) {
+        String sql = """
+        INSERT INTO tournaments (name, registration_deadline, status)
+        VALUES (?, ?, 'UPCOMING')
+        RETURNING id
+        """;
+
+        Integer id = jdbcTemplate.queryForObject(sql, Integer.class,
+                request.getName(),
+                request.getRegistrationDeadline());
+
+        return getTournamentById(id);
+    }
+
+    private TournamentDTO getTournamentById(Integer id) {
+        String sql = """
+        SELECT t.id, t.name, t.registration_deadline, t.status,
+               (SELECT COUNT(*) FROM tournament_participants tp WHERE tp.tournament_id = t.id) as registered_count
+        FROM tournaments t
+        WHERE t.id = ?
+        """;
+
+        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+            TournamentDTO dto = new TournamentDTO();
+            dto.setId(rs.getInt("id"));
+            dto.setName(rs.getString("name"));
+
+            if (rs.getTimestamp("registration_deadline") != null) {
+                dto.setRegistrationDeadline(rs.getTimestamp("registration_deadline").toLocalDateTime());
+            }
+
+            dto.setStatus(rs.getString("status"));
+            dto.setRegisteredCount(rs.getInt("registered_count"));
+            dto.setCanStart(rs.getInt("registered_count") >= 2);
+
+            return dto;
+        }, id);
+    }
+
+    public void updateTournament(Integer tournamentId, UpdateTournamentDTO request) {
+        String sql = """
+        UPDATE tournaments
+        SET name = ?, registration_deadline = ?, status = ?
+        WHERE id = ?
+        """;
+
+        jdbcTemplate.update(sql,
+                request.getName(),
+                request.getRegistrationDeadline(),
+                request.getStatus(),
+                tournamentId);
+    }
+
+    public void deleteTournament(Integer tournamentId) {
+        String deleteParticipantsSql = "DELETE FROM tournament_participants WHERE tournament_id = ?";
+        String deleteMatchesSql = "DELETE FROM matches WHERE tournament_id = ?";
+        String deleteTournamentSql = "DELETE FROM tournaments WHERE id = ?";
+
+        jdbcTemplate.update(deleteParticipantsSql, tournamentId);
+        jdbcTemplate.update(deleteMatchesSql, tournamentId);
+        jdbcTemplate.update(deleteTournamentSql, tournamentId);
+    }
+
+    public void openTournamentRegistration(Integer tournamentId) {
+        String sql = "UPDATE tournaments SET status = 'REGISTRATION_OPEN' WHERE id = ?";
+        jdbcTemplate.update(sql, tournamentId);
+    }
+
+    public void closeTournamentRegistration(Integer tournamentId) {
+        String newStatus = tournamentValidationService.determineTournamentStatusAfterRegistrationClose(tournamentId);
+
+        String sql = "UPDATE tournaments SET status = ? WHERE id = ?";
+        jdbcTemplate.update(sql, newStatus, tournamentId);
+    }
+
+    public List<TournamentParticipantDTO> getTournamentParticipants(Integer tournamentId) {
+        String sql = """
+        SELECT u.id as user_id, u.username, u.full_name,
+               tp.registration_date
+        FROM tournament_participants tp
+        JOIN users u ON tp.user_id = u.id
+        WHERE tp.tournament_id = ?
+        ORDER BY tp.registration_date
+        """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            TournamentParticipantDTO dto = new TournamentParticipantDTO();
+            dto.setUserId(rs.getInt("user_id"));
+            dto.setUsername(rs.getString("username"));
+            dto.setFullName(rs.getString("full_name"));
+
+            if (rs.getTimestamp("registration_date") != null) {
+                dto.setRegistrationDate(rs.getTimestamp("registration_date").toLocalDateTime());
+            }
+
+            return dto;
+        }, tournamentId);
+    }
+
 }

@@ -23,11 +23,11 @@ public class Match {
 
     @ManyToOne
     @JoinColumn(name = "player1_id")
-    private Player player1;
+    private User player1;
 
     @ManyToOne
     @JoinColumn(name = "player2_id")
-    private Player player2;
+    private User player2;
 
     @Column(name = "player1_score")
     private Integer player1Score;
@@ -35,9 +35,9 @@ public class Match {
     @Column(name = "player2_score")
     private Integer player2Score;
 
-    @Column(name = "match_date", nullable = false)
-    private LocalDateTime matchDate;
+    @Column(name = "match_date")
+    private LocalDateTime scheduledTime;
 
     @Column(nullable = false)
-    private String status;
+    private String status = "SCHEDULED";
 }

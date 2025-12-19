@@ -4,11 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PlayerDTO {
-    private Integer id;
-    private String fullName;
-    private String username;
+public class UpdateTournamentDTO {
+    private String name;
+    private LocalDateTime registrationDeadline;
+    private String status;
 }

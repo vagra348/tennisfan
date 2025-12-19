@@ -17,42 +17,6 @@ public class AdminController {
     @Autowired
     private AdminService adminService;
 
-    @GetMapping("/players")
-    public ResponseEntity<List<AdminPlayerDTO>> getAllPlayers(
-            @RequestHeader("X-User-Id") Integer adminUserId) {
-        return ResponseEntity.ok(adminService.getAllPlayers(adminUserId));
-    }
-
-    @PostMapping("/players")
-    public ResponseEntity<AdminPlayerDTO> createPlayer(
-            @RequestHeader("X-User-Id") Integer adminUserId,
-            @RequestBody CreatePlayerRequest request) {
-        return ResponseEntity.ok(adminService.createPlayer(adminUserId, request));
-    }
-
-    @PutMapping("/players/{playerId}")
-    public ResponseEntity<Map<String, String>> updatePlayer(
-            @RequestHeader("X-User-Id") Integer adminUserId,
-            @PathVariable Integer playerId,
-            @RequestBody CreatePlayerRequest request) {
-        adminService.updatePlayer(adminUserId, playerId, request);
-
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Player updated successfully");
-        return ResponseEntity.ok(response);
-    }
-
-    @DeleteMapping("/players/{playerId}")
-    public ResponseEntity<Map<String, String>> deletePlayer(
-            @RequestHeader("X-User-Id") Integer adminUserId,
-            @PathVariable Integer playerId) {
-        adminService.deletePlayer(adminUserId, playerId);
-
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Player deleted successfully");
-        return ResponseEntity.ok(response);
-    }
-
     @GetMapping("/matches")
     public ResponseEntity<List<AdminMatchDTO>> getAllMatches(
             @RequestHeader("X-User-Id") Integer adminUserId) {
@@ -103,7 +67,7 @@ public class AdminController {
         adminService.updateUserRole(adminUserId, userId, request);
 
         Map<String, String> response = new HashMap<>();
-        response.put("message", "User role updated successfully");
+        response.put("message", "User role updated successfully to " + request.getRole());
         return ResponseEntity.ok(response);
     }
 
@@ -117,4 +81,70 @@ public class AdminController {
         response.put("message", "User deleted successfully");
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/tournaments")
+    public ResponseEntity<List<TournamentDTO>> getAllTournaments(
+            @RequestHeader("X-User-Id") Integer adminUserId) {
+        return ResponseEntity.ok(adminService.getAllTournaments(adminUserId));
+    }
+
+    @PostMapping("/tournaments")
+    public ResponseEntity<TournamentDTO> createTournament(
+            @RequestHeader("X-User-Id") Integer adminUserId,
+            @RequestBody CreateTournamentDTO request) {
+        return ResponseEntity.ok(adminService.createTournament(adminUserId, request));
+    }
+
+    @PutMapping("/tournaments/{tournamentId}")
+    public ResponseEntity<Map<String, String>> updateTournament(
+            @RequestHeader("X-User-Id") Integer adminUserId,
+            @PathVariable Integer tournamentId,
+            @RequestBody UpdateTournamentDTO request) {
+        adminService.updateTournament(adminUserId, tournamentId, request);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Турнир обновлен успешно");
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/tournaments/{tournamentId}")
+    public ResponseEntity<Map<String, String>> deleteTournament(
+            @RequestHeader("X-User-Id") Integer adminUserId,
+            @PathVariable Integer tournamentId) {
+        adminService.deleteTournament(adminUserId, tournamentId);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Турнир удален успешно");
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/tournaments/{tournamentId}/open-registration")
+    public ResponseEntity<Map<String, String>> openTournamentRegistration(
+            @RequestHeader("X-User-Id") Integer adminUserId,
+            @PathVariable Integer tournamentId) {
+        adminService.openTournamentRegistration(adminUserId, tournamentId);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Регистрация на турнир открыта");
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/tournaments/{tournamentId}/close-registration")
+    public ResponseEntity<Map<String, String>> closeTournamentRegistration(
+            @RequestHeader("X-User-Id") Integer adminUserId,
+            @PathVariable Integer tournamentId) {
+        adminService.closeTournamentRegistration(adminUserId, tournamentId);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Регистрация на турнир закрыта");
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/tournaments/{tournamentId}/participants")
+    public ResponseEntity<List<TournamentParticipantDTO>> getTournamentParticipants(
+            @RequestHeader("X-User-Id") Integer adminUserId,
+            @PathVariable Integer tournamentId) {
+        return ResponseEntity.ok(adminService.getTournamentParticipants(adminUserId, tournamentId));
+    }
+
 }

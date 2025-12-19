@@ -21,4 +21,9 @@ public class TournamentController {
     public ResponseEntity<List<Tournament>> getAllTournaments() {
         return ResponseEntity.ok(tournamentRepository.findAll());
     }
+
+    @GetMapping("/active")
+    public ResponseEntity<List<Tournament>> getActiveTournaments() {
+        return ResponseEntity.ok(tournamentRepository.findActiveTournaments());
+    }
 }

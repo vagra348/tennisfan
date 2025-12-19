@@ -3,6 +3,7 @@ package tennisfan.tf_backend.services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import tennisfan.tf_backend.annotations.RequiresAdmin;
 import tennisfan.tf_backend.dto.*;
 import tennisfan.tf_backend.repositories.AdminRepository;
 
@@ -17,80 +18,38 @@ public class AdminService {
     @Autowired
     private AdminRepository adminRepository;
 
-    public List<AdminPlayerDTO> getAllPlayers(Integer adminUserId) {
-        if (!isUserAdmin(adminUserId)) {
-            throw new SecurityException("Only admins can perform this action");
-        }
-        return adminRepository.getAllPlayersForAdmin();
-    }
-
-    public AdminPlayerDTO createPlayer(Integer adminUserId, CreatePlayerRequest request) {
-        if (!isUserAdmin(adminUserId)) {
-            throw new SecurityException("Only admins can perform this action");
-        }
-        return adminRepository.createPlayer(request);
-    }
-
-    public void updatePlayer(Integer adminUserId, Integer playerId, CreatePlayerRequest request) {
-        if (!isUserAdmin(adminUserId)) {
-            throw new SecurityException("Only admins can perform this action");
-        }
-        adminRepository.updatePlayer(playerId, request);
-    }
-
-    public void deletePlayer(Integer adminUserId, Integer playerId) {
-        if (!isUserAdmin(adminUserId)) {
-            throw new SecurityException("Only admins can perform this action");
-        }
-        adminRepository.deletePlayer(playerId);
-    }
-
+    @RequiresAdmin
     public List<AdminMatchDTO> getAllMatches(Integer adminUserId) {
-        if (!isUserAdmin(adminUserId)) {
-            throw new SecurityException("Only admins can perform this action");
-        }
         return adminRepository.getAllMatchesForAdmin();
     }
 
+    @RequiresAdmin
     public AdminMatchDTO createMatch(Integer adminUserId, CreateMatchRequest request) {
-        if (!isUserAdmin(adminUserId)) {
-            throw new SecurityException("Only admins can perform this action");
-        }
         return adminRepository.createMatch(request);
     }
 
+    @RequiresAdmin
     public void updateMatch(Integer adminUserId, Integer matchId, CreateMatchRequest request) {
-        if (!isUserAdmin(adminUserId)) {
-            throw new SecurityException("Only admins can perform this action");
-        }
         adminRepository.updateMatch(matchId, request);
     }
 
+    @RequiresAdmin
     public void deleteMatch(Integer adminUserId, Integer matchId) {
-        if (!isUserAdmin(adminUserId)) {
-            throw new SecurityException("Only admins can perform this action");
-        }
         adminRepository.deleteMatch(matchId);
     }
 
+    @RequiresAdmin
     public List<AdminUserDTO> getAllUsers(Integer adminUserId) {
-        if (!isUserAdmin(adminUserId)) {
-            throw new SecurityException("Only admins can perform this action");
-        }
         return adminRepository.getAllUsers();
     }
 
+    @RequiresAdmin
     public void updateUserRole(Integer adminUserId, Integer userId, UpdateRoleRequest request) {
-        if (!isUserAdmin(adminUserId)) {
-            throw new SecurityException("Only admins can perform this action");
-        }
         adminRepository.updateUserRole(userId, request.getRole());
     }
 
+    @RequiresAdmin
     public void deleteUser(Integer adminUserId, Integer userId) {
-        if (!isUserAdmin(adminUserId)) {
-            throw new SecurityException("Only admins can perform this action");
-        }
         if (adminUserId.equals(userId)) {
             throw new SecurityException("Admin cannot delete themselves");
         }
@@ -106,4 +65,40 @@ public class AdminService {
             return false;
         }
     }
+
+    @RequiresAdmin
+    public List<TournamentDTO> getAllTournaments(Integer adminUserId) {
+        return adminRepository.getAllTournaments();
+    }
+
+    @RequiresAdmin
+    public TournamentDTO createTournament(Integer adminUserId, CreateTournamentDTO request) {
+        return adminRepository.createTournament(request);
+    }
+
+    @RequiresAdmin
+    public void updateTournament(Integer adminUserId, Integer tournamentId, UpdateTournamentDTO request) {
+        adminRepository.updateTournament(tournamentId, request);
+    }
+
+    @RequiresAdmin
+    public void deleteTournament(Integer adminUserId, Integer tournamentId) {
+        adminRepository.deleteTournament(tournamentId);
+    }
+
+    @RequiresAdmin
+    public void openTournamentRegistration(Integer adminUserId, Integer tournamentId) {
+        adminRepository.openTournamentRegistration(tournamentId);
+    }
+
+    @RequiresAdmin
+    public void closeTournamentRegistration(Integer adminUserId, Integer tournamentId) {
+        adminRepository.closeTournamentRegistration(tournamentId);
+    }
+
+    @RequiresAdmin
+    public List<TournamentParticipantDTO> getTournamentParticipants(Integer adminUserId, Integer tournamentId) {
+        return adminRepository.getTournamentParticipants(tournamentId);
+    }
+
 }

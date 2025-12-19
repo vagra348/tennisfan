@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "tournaments")
 @Data
@@ -18,5 +20,14 @@ public class Tournament {
     @Column(nullable = false)
     private String name;
 
-    private String location;
+    @Column(name = "registration_deadline")
+    private LocalDateTime registrationDeadline;
+
+    @Column(nullable = false)
+    private String status = "UPCOMING";
+
+    Tournament(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
 }

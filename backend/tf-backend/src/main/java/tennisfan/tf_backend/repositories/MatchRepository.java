@@ -30,7 +30,7 @@ public class MatchRepository {
         dto.setPlayer2Score(rs.getInt("player2_score"));
         if (rs.wasNull()) dto.setPlayer2Score(null);
 
-        java.sql.Timestamp timestamp = rs.getTimestamp("match_date");
+        java.sql.Timestamp timestamp = rs.getTimestamp("match_date");  // match_date, не match_date!
         if (timestamp != null) {
             dto.setMatchDate(timestamp.toLocalDateTime());
         }
@@ -41,14 +41,14 @@ public class MatchRepository {
 
     public List<MatchDTO> findAllMatches(Integer userId) {
         String sql = """
-            SELECT m.id, t.name as tournament_name, 
-                   p1.id as player1_id, p1.full_name as player1_name, 
-                   p2.id as player2_id, p2.full_name as player2_name,
+            SELECT m.id, t.name as tournament_name,
+                   u1.id as player1_id, u1.full_name as player1_name,  -- users, не players!
+                   u2.id as player2_id, u2.full_name as player2_name,
                    m.player1_score, m.player2_score, m.match_date, m.status
             FROM matches m
             JOIN tournaments t ON m.tournament_id = t.id
-            JOIN players p1 ON m.player1_id = p1.id
-            JOIN players p2 ON m.player2_id = p2.id
+            JOIN users u1 ON m.player1_id = u1.id  -- JOIN с users!
+            JOIN users u2 ON m.player2_id = u2.id  -- JOIN с users!
             ORDER BY m.match_date DESC
             """;
 
@@ -66,14 +66,14 @@ public class MatchRepository {
 
     public List<MatchDTO> findMatchesByFavoritePlayers(Integer userId) {
         String sql = """
-            SELECT DISTINCT m.id, t.name as tournament_name, 
-                   p1.id as player1_id, p1.full_name as player1_name, 
+            SELECT DISTINCT m.id, t.name as tournament_name,
+                   p1.id as player1_id, p1.full_name as player1_name,
                    p2.id as player2_id, p2.full_name as player2_name,
                    m.player1_score, m.player2_score, m.match_date, m.status
             FROM matches m
             JOIN tournaments t ON m.tournament_id = t.id
-            JOIN players p1 ON m.player1_id = p1.id
-            JOIN players p2 ON m.player2_id = p2.id
+            JOIN users p1 ON m.player1_id = p1.id
+            JOIN users p2 ON m.player2_id = p2.id
             WHERE p1.id IN (SELECT player_id FROM favorite_players WHERE user_id = ?)
                OR p2.id IN (SELECT player_id FROM favorite_players WHERE user_id = ?)
             ORDER BY m.match_date DESC

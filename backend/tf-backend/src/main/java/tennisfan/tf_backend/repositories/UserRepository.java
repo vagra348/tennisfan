@@ -34,13 +34,23 @@ public class UserRepository {
     }
 
     public User save(User user) {
-        String sql = "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?) RETURNING id";
-        Integer id = jdbcTemplate.queryForObject(sql, Integer.class,
-                user.getUsername(),
-                user.getPasswordHash(),
-                user.getRole());
-        user.setId(id);
-
+        if (user.getId() == null) {
+            String sql = "INSERT INTO users (username, password_hash, role, full_name) VALUES (?, ?, ?, ?) RETURNING id";
+            Integer id = jdbcTemplate.queryForObject(sql, Integer.class,
+                    user.getUsername(),
+                    user.getPasswordHash(),
+                    user.getRole() != null ? user.getRole() : "USER",
+                    user.getFullName() != null ? user.getFullName() : user.getUsername());
+            user.setId(id);
+        } else {
+            String sql = "UPDATE users SET username = ?, password_hash = ?, role = ?, full_name = ? WHERE id = ?";
+            jdbcTemplate.update(sql,
+                    user.getUsername(),
+                    user.getPasswordHash(),
+                    user.getRole(),
+                    user.getFullName(),
+                    user.getId());
+        }
         return user;
     }
 }
