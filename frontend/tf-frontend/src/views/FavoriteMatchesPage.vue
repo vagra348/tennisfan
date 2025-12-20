@@ -46,7 +46,7 @@ export default {
     const loading = ref(true)
     
     const api = axios.create({
-      baseURL: 'http://localhost:8081',
+      baseURL: '',
       headers: {
         'Content-Type': 'application/json'
       }

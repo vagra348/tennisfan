@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AllMatchesPage from '../views/AllMatchesPage.vue'
 import FavoriteMatchesPage from '../views/FavoriteMatchesPage.vue'
+import AdminPanel from '../views/AdminPanel.vue'
 
 const routes = [
   {
@@ -17,6 +18,11 @@ const routes = [
     path: '/favorite-matches',
     name: 'FavoriteMatches',
     component: FavoriteMatchesPage
+  },
+  {
+    path: '/admin',
+    name: 'AdminPanel',
+    component: AdminPanel
   }
 ]
 

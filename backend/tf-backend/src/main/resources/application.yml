@@ -22,4 +22,9 @@ spring:
     format:
       date-time: yyyy-MM-dd HH:mm:ss
 server:
-  port: 8081
+  port: 8443
+  ssl:
+    key-store-type: PKCS12
+    key-store: classpath:cert/server.p12
+    key-store-password: vagra348
+    key-alias: tennis-fan

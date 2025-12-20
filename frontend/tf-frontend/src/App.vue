@@ -6,7 +6,7 @@
         <p style="color: #666;">Сервис для теннисных фанатов</p>
       </div>
       
-      <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 30px;">
+      <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; flex-wrap: wrap;">
         <router-link 
           to="/favorite-matches" 
           :class="['nav-btn', { active: $route.name === 'FavoriteMatches' }]"
@@ -21,6 +21,14 @@
           Все матчи
         </router-link>
         
+        <router-link 
+          v-if="currentUser.role === 'ADMIN'"
+          to="/admin" 
+          :class="['nav-btn-admin', { active: $route.name === 'AdminPanel' }]"
+        >
+          Панель администратора
+        </router-link>
+        
         <button @click="logout" class="logout-btn-small">
           Выйти
         </button>
@@ -28,6 +36,9 @@
       
       <div style="text-align: center; margin-bottom: 20px; color: #666;">
         Пользователь: <strong>{{ currentUser.username }}</strong>
+        <span v-if="currentUser.role === 'ADMIN'" style="color: #4CAF50; margin-left: 10px;">
+          (Администратор)
+        </span>
       </div>
       
       <main class="main-content">
@@ -89,6 +100,7 @@ export default {
     const logout = () => {
       currentUser.value = null
       localStorage.removeItem('tennisfan_user')
+      router.push('/')
     }
     
     const showMessage = (text, type) => {
@@ -144,6 +156,29 @@ export default {
 
 .nav-btn.active {
   background-color: #2E7D32;
+}
+
+.nav-btn-admin {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: rgba(33, 150, 243, 0.1);
+  color: #2196F3;
+  text-decoration: none;
+  border-radius: 4px;
+  border: 1px solid rgba(33, 150, 243, 0.3);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.nav-btn-admin:hover {
+  background-color: rgba(33, 150, 243, 0.2);
+  text-decoration: none;
+}
+
+.nav-btn-admin.active {
+  background-color: rgba(33, 150, 243, 0.3);
+  border-color: #2196F3;
 }
 
 .logout-btn-small {
